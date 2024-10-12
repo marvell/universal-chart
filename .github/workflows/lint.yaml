@@ -1,0 +1,8 @@
+name: Lint Helm Chart
+
+on:
+  push:
+
+jobs:
+  lint:
+    uses: ./.github/workflows/_lint.yml
