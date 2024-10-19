@@ -13,10 +13,11 @@ spec:
       {{- include "universal-chart.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        kubernetes.io/change-cause: "{{ dateInZone "2006-01-02T15:04:05Z" (now) "UTC" }}"
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "universal-chart.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
