@@ -37,8 +37,26 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- $podEnv := .Values.podEnv }}
+          {{- if or .Values.redis.enabled (gt (len $podEnv) 0) }}
           env:
-            {{- toYaml .Values.podEnv | nindent 12 }}
+            {{- if .Values.redis.enabled }}
+            - name: REDIS_HOST
+              value: {{ printf "%s-redis-master" (include "universal-chart.fullname" .) | quote }}
+            - name: REDIS_PORT
+              value: "6379"
+            {{- if .Values.redis.auth.enabled }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ default (printf "%s-redis" (include "universal-chart.fullname" .)) .Values.redis.auth.existingSecret | quote }}
+                  key: redis-password
+            {{- end }}
+            {{- end }}
+            {{- if $podEnv }}
+            {{- toYaml $podEnv | nindent 12 }}
+            {{- end }}
+          {{- end }}
           {{- if .Values.podPorts }}
           ports:
             {{- range .Values.podPorts }}
