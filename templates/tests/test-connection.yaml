@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "universal-chart.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "universal-chart.fullname" . }}:{{ include "universal-chart.primaryServicePortNumber" . }}']
   restartPolicy: Never

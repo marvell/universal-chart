@@ -37,7 +37,22 @@ spec:
               service:
                 name: {{ include "universal-chart.fullname" $ }}
                 port:
-                  number: {{ $.Values.service.port }}
+                  {{- $servicePort := default (include "universal-chart.defaultServiceBackendPort" $) .servicePort -}}
+                  {{- if kindIs "map" $servicePort }}
+                  {{- with $servicePort.name }}
+                  name: {{ . }}
+                  {{- end }}
+                  {{- with $servicePort.number }}
+                  number: {{ . }}
+                  {{- end }}
+                  {{- else }}
+                  {{- $servicePortValue := printf "%v" $servicePort -}}
+                  {{- if regexMatch "^[0-9]+$" $servicePortValue }}
+                  number: {{ int $servicePortValue }}
+                  {{- else }}
+                  name: {{ $servicePortValue }}
+                  {{- end }}
+                  {{- end }}
           {{- end }}
     {{- end }}
 {{- end }}

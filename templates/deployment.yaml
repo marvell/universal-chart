@@ -39,10 +39,19 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             {{- toYaml .Values.podEnv | nindent 12 }}
+          {{- if .Values.podPorts }}
           ports:
-            - name: http
+            {{- range .Values.podPorts }}
+            - name: {{ .name }}
+              containerPort: {{ .containerPort }}
+              protocol: {{ default "TCP" .protocol }}
+            {{- end }}
+          {{- else }}
+          ports:
+            - name: {{ default "http" .Values.service.portName }}
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+          {{- end }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:

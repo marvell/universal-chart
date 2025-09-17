@@ -46,6 +46,13 @@ podSecurityContext: {}
 # For more information, see: https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
 podEnv: []
 
+# This section defines the container ports exposed by the workload.
+# Customize the list to map multiple ports per pod.
+podPorts:
+  - name: http
+    containerPort: 80
+    protocol: TCP
+
 securityContext: {}
   # capabilities:
   #   drop:
@@ -60,6 +67,24 @@ service:
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
   port: 80
+  # Define one or more service ports. Each entry can point to a named container port declared above.
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  # Optionally create additional Service resources that select the same or custom targets.
+  additional: []
+  #   - nameSuffix: metrics
+  #     type: ClusterIP
+  #     annotations: {}
+  #     labels: {}
+  #     ports:
+  #       - name: metrics
+  #         port: 9090
+  #         targetPort: metrics
+  #         protocol: TCP
+  #     selector: {}
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -73,6 +98,7 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
+          servicePort: http
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:

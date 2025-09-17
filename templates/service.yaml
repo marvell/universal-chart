@@ -7,9 +7,68 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+    {{- include "universal-chart.formatServicePorts" (dict "ports" .Values.service.ports "fallback" (dict "name" (default "http" .Values.service.portName) "port" .Values.service.port "targetPort" (default "http" .Values.service.targetPort) "protocol" (default "TCP" .Values.service.protocol) "nodePort" .Values.service.nodePort "appProtocol" .Values.service.appProtocol)) | nindent 4 }}
   selector:
     {{- include "universal-chart.selectorLabels" . | nindent 4 }}
+{{- $root := . }}
+{{- range $index, $svc := .Values.service.additional }}
+{{- $baseName := include "universal-chart.fullname" $root }}
+{{- $suffixIndex := add $index 1 }}
+{{- $suffix := default (printf "%d" $suffixIndex) $svc.nameSuffix }}
+{{- $serviceName := default (printf "%s-%s" $baseName $suffix) $svc.name }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $serviceName }}
+  labels:
+    {{- include "universal-chart.labels" $root | nindent 4 }}
+    {{- with $svc.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with $svc.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ default $root.Values.service.type $svc.type }}
+  {{- with $svc.clusterIP }}
+  clusterIP: {{ . }}
+  {{- end }}
+  {{- with $svc.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
+  {{- end }}
+  {{- with $svc.externalIPs }}
+  externalIPs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $svc.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $svc.sessionAffinity }}
+  sessionAffinity: {{ . }}
+  {{- end }}
+  {{- with $svc.sessionAffinityConfig }}
+  sessionAffinityConfig:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $svc.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ . }}
+  {{- end }}
+  {{- with $svc.ipFamilies }}
+  ipFamilies:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $svc.internalTrafficPolicy }}
+  internalTrafficPolicy: {{ . }}
+  {{- end }}
+  ports:
+    {{- include "universal-chart.formatServicePorts" (dict "ports" $svc.ports "fallback" nil) | nindent 4 }}
+  selector:
+    {{- if $svc.selector }}
+    {{- toYaml $svc.selector | nindent 4 }}
+    {{- else }}
+    {{- include "universal-chart.selectorLabels" $root | nindent 4 }}
+    {{- end }}
+{{- end }}

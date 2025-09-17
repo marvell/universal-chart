@@ -60,3 +60,69 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Render a single service port entry.
+*/}}
+{{- define "universal-chart.formatServicePort" -}}
+{{- $port := .port -}}
+{{- $index := default 0 .index -}}
+{{- $name := default (printf "port-%d" $index) $port.name -}}
+{{- $hasName := ne (default "" $port.name) "" -}}
+{{- $targetDefault := ternary $port.name (printf "%v" $port.port) $hasName -}}
+{{- $target := default $targetDefault $port.targetPort -}}
+- name: {{ $name }}
+  port: {{ $port.port }}
+  targetPort: {{ $target }}
+  protocol: {{ default "TCP" $port.protocol }}
+{{- with $port.nodePort }}
+  nodePort: {{ . }}
+{{- end }}
+{{- with $port.appProtocol }}
+  appProtocol: {{ . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Render the service ports list, falling back to a default when none provided.
+*/}}
+{{- define "universal-chart.formatServicePorts" -}}
+{{- $ports := .ports -}}
+{{- $fallback := .fallback -}}
+{{- if and $ports (gt (len $ports) 0) -}}
+{{- range $index, $port := $ports -}}
+{{ include "universal-chart.formatServicePort" (dict "port" $port "index" $index) }}
+{{- end -}}
+{{- else if $fallback -}}
+{{ include "universal-chart.formatServicePort" (dict "port" $fallback "index" 0) }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return the default service backend port (name or number) for consumers like ingress.
+*/}}
+{{- define "universal-chart.defaultServiceBackendPort" -}}
+{{- if and .Values.service.ports (gt (len .Values.service.ports) 0) -}}
+{{- $first := index .Values.service.ports 0 -}}
+{{- if $first.name -}}
+{{- $first.name -}}
+{{- else -}}
+{{- $first.port -}}
+{{- end -}}
+{{- else if .Values.service.portName -}}
+{{- .Values.service.portName -}}
+{{- else -}}
+{{- .Values.service.port -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return the first service port number for use in hooks or tests.
+*/}}
+{{- define "universal-chart.primaryServicePortNumber" -}}
+{{- if and .Values.service.ports (gt (len .Values.service.ports) 0) -}}
+{{- (index .Values.service.ports 0).port -}}
+{{- else -}}
+{{- .Values.service.port -}}
+{{- end -}}
+{{- end }}
