@@ -75,12 +75,12 @@ Render a single service port entry.
   port: {{ $port.port }}
   targetPort: {{ $target }}
   protocol: {{ default "TCP" $port.protocol }}
-{{- with $port.nodePort }}
+{{ with $port.nodePort }}
   nodePort: {{ . }}
-{{- end }}
-{{- with $port.appProtocol }}
+{{ end }}
+{{ with $port.appProtocol }}
   appProtocol: {{ . }}
-{{- end }}
+{{ end }}
 {{- end }}
 
 {{/*
